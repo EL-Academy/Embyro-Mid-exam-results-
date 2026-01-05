@@ -22,30 +22,9 @@
     box-shadow:0 2px 10px rgba(0,0,0,.06);
   }
 
-  /* Logo */
-  .logo-wrap{
-    text-align:center;
-    margin-bottom:12px;
-  }
-  .logo-wrap img{
-    width:90px;
-    height:90px;
-    object-fit:contain;
-    border-radius:50%;
-    background:#ffffff;
-    padding:8px;
-    box-shadow:0 2px 6px rgba(0,0,0,.08);
-  }
-  .logo-fallback{
-    display:none;
-    font-size:12px;
-    color:#64748b;
-    margin-top:6px;
-  }
-
   h1{
     font-size:18px;
-    margin:4px 0;
+    margin:6px 0;
     color:#1e3a8a;
     text-align:center;
   }
@@ -54,7 +33,7 @@
     font-size:13px;
     color:#64748b;
     text-align:center;
-    margin:10px 0 14px;
+    margin:12px 0 16px;
   }
 
   input{
@@ -102,15 +81,12 @@
 <body>
   <div class="box">
 
-
-    <!-- TITLES -->
     <h1>IBN Sina University</h1>
     <h1>Faculty of Medicine</h1>
     <h1>Mid Exam Embryology Result (30)</h1>
 
     <div class="sub">Enter your password to view your result</div>
 
-    <!-- PASSWORD INPUT -->
     <input
       id="sid"
       type="password"
@@ -128,7 +104,7 @@
   </div>
 
 <script>
-let LOOKUP = null; // password -> record
+let LOOKUP = null;
 
 async function loadData(){
   const res = await fetch("results.json", { cache: "no-store" });
@@ -136,22 +112,17 @@ async function loadData(){
 
   const raw = await res.json();
 
-  // Supports both formats:
-  // 1) { "results": [ {Name, Password, Result}, ... ] }  (your file)
-  // 2) { "Abc123": {name:"", result:""} } (old style)
+  // Build password → record map
+  LOOKUP = {};
   if (raw && Array.isArray(raw.results)) {
-    LOOKUP = {};
     raw.results.forEach(r => {
-      const pw = (r.Password ?? "").toString().trim();
-      if (!pw) return; // skip empty passwords
+      const pw = String(r.Password || "").trim();
+      if (!pw) return;
       LOOKUP[pw] = {
-        Name: (r.Name ?? "").toString().trim(),
-        Result: (r.Result ?? "").toString().trim()
+        Name: String(r.Name || "").trim(),
+        Result: String(r.Result || "").trim()
       };
     });
-  } else if (raw && typeof raw === "object") {
-    // fallback: assume it's already keyed by password
-    LOOKUP = raw;
   } else {
     throw new Error("Invalid results.json format");
   }
@@ -168,24 +139,10 @@ function showResult(rec){
   document.getElementById("msg").style.display = "none";
   const out = document.getElementById("out");
   out.style.display = "block";
-
-  // Support both record styles
-  const name = (rec.Name ?? rec.name ?? "").toString();
-  const result = (rec.Result ?? rec.result ?? "").toString();
-
   out.innerHTML = `
-    <div class="row"><span class="label">Name:</span> <span dir="auto">${escapeHtml(name)}</span></div>
-    <div class="row"><span class="label">Result:</span> <span dir="auto">${escapeHtml(result)}</span></div>
+    <div class="row"><span class="label">Name:</span> <span dir="auto">${rec.Name}</span></div>
+    <div class="row"><span class="label">Result:</span> <span dir="auto">${rec.Result}</span></div>
   `;
-}
-
-function escapeHtml(str){
-  return str
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
 }
 
 async function lookup(){
